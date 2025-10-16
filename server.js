@@ -11,26 +11,28 @@ const app = express();
 app.use(express.json());
 
 // Allow requests from React frontend
+// --------- CORS CONFIGURATION ----------
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://hoverhouse-frontend-x3cz.vercel.app"
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://hoverhouse-frontend-x3cz.vercel.app"
-  ],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
-app.options("*", cors()); // allow preflight for all routes
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  next();
-});
+// Handle preflight
+app.options("*", cors());
+
 
 
 // --------- Connect to MongoDB ---------
