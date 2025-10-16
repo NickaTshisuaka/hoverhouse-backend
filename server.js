@@ -15,7 +15,8 @@ app.use(express.json());
 // --------- UNIVERSAL CORS FIX (Render-safe) ----------
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://hoverhouse-frontend-x3cz.vercel.app"
+  "https://hoverhouse-frontend-x3cz.vercel.app",
+  "https://hoverhouse-backend.onrender.com/api"
 ];
 
 app.use((req, res, next) => {
