@@ -11,15 +11,17 @@ const app = express();
 app.use(express.json());
 
 // Allow requests from React frontend
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://hoverhouse-backend.onrender.com"
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://hoverhouse-frontend-x3cz.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+app.options("*", cors()); // allow preflight for all routes
+
 
 // --------- Connect to MongoDB ---------
 mongoose
