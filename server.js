@@ -13,7 +13,10 @@ app.use(express.json());
 // Allow requests from React frontend
 app.use(
   cors({
-    origin: "http://localhost:5173", // React runs here with Vite
+    origin: [
+      "http://localhost:5173",
+      "https://hoverhouse-backend.onrender.com"
+    ],
     credentials: true,
   })
 );
