@@ -22,6 +22,16 @@ app.use(cors({
 }));
 app.options("*", cors()); // allow preflight for all routes
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  next();
+});
+
 
 // --------- Connect to MongoDB ---------
 mongoose
