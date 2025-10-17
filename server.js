@@ -10,31 +10,28 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Allow requests from React frontend
 // --------- CORS CONFIGURATION ----------
-// --------- UNIVERSAL CORS FIX (Render-safe) ----------
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://hoverhouse-frontend-two.vercel.app/",
-  "https://hoverhouse-backend.onrender.com/api"
+  "https://hoverhouse-frontend-two.vercel.app"
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Credentials", "true");
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (like curl or Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS blocked: ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true
+}));
 
-  // Important: stop OPTIONS preflight from sending a 204 without headers
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-  next();
-});
-
+// Handle preflight
+app.options("*", cors());
 
 
 
