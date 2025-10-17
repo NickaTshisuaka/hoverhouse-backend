@@ -3,37 +3,47 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const cors = require("cors");
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// --------- CORS CONFIGURATION ----------
+// --------- CORS CONFIGURATION (Updated Safe Version) ----------
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://hoverhouse-frontend-two.vercel.app"
+  "http://localhost:5173", // local dev
+  "https://hoverhouse-frontend-two.vercel.app" // your deployed frontend (no slash at end)
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin (like curl or Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `CORS blocked: ${origin}`;
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true
-}));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-// Handle preflight
-app.options("*", cors());
+  // Check if the origin is allowed
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    console.log(`✅ Accepted CORS origin: ${origin}`);
+  } else if (origin) {
+    console.log(`❌ Blocked CORS origin: ${origin}`);
+  }
 
+  // Allow headers & methods
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
+  // Preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 // --------- Connect to MongoDB ---------
 mongoose
@@ -147,16 +157,17 @@ app.get("/api/properties", async (req, res) => {
 app.get("/api/properties/:id", async (req, res) => {
   try {
     const property = await Property.findById(req.params.id);
-    if (!property) return res.status(404).json({ message: "Property not found" });
+    if (!property)
+      return res.status(404).json({ message: "Property not found" });
     res.json(property);
   } catch (err) {
     console.error(err);
-    // CRITICAL FIX: Handle invalid Mongoose ID format (CastError) gracefully
+    // Handle invalid Mongoose ID format
     if (err.name === "CastError" && err.kind === "ObjectId") {
-      // Return 404 for malformed IDs
-      return res.status(404).json({ message: "Property not found (Invalid ID format)" });
+      return res
+        .status(404)
+        .json({ message: "Property not found (Invalid ID format)" });
     }
-    // Handle all other server errors
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -166,7 +177,9 @@ app.post("/api/properties", verifyToken, async (req, res) => {
   try {
     const newProperty = new Property(req.body);
     await newProperty.save();
-    res.status(201).json({ message: "Property created", property: newProperty });
+    res
+      .status(201)
+      .json({ message: "Property created", property: newProperty });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -176,8 +189,11 @@ app.post("/api/properties", verifyToken, async (req, res) => {
 // PUT update property (protected)
 app.put("/api/properties/:id", verifyToken, async (req, res) => {
   try {
-    const updated = await Property.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "Property not found" });
+    const updated = await Property.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!updated)
+      return res.status(404).json({ message: "Property not found" });
     res.json({ message: "Property updated", property: updated });
   } catch (err) {
     console.error(err);
@@ -189,7 +205,8 @@ app.put("/api/properties/:id", verifyToken, async (req, res) => {
 app.delete("/api/properties/:id", verifyToken, async (req, res) => {
   try {
     const deleted = await Property.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Property not found" });
+    if (!deleted)
+      return res.status(404).json({ message: "Property not found" });
     res.json({ message: "Property deleted" });
   } catch (err) {
     console.error(err);
