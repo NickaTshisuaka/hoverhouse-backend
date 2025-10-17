@@ -154,6 +154,12 @@ app.get("/api/properties/:id", async (req, res) => {
     res.json(property);
   } catch (err) {
     console.error(err);
+    // CRITICAL FIX: Handle invalid Mongoose ID format (CastError) gracefully
+    if (err.name === "CastError" && err.kind === "ObjectId") {
+      // Return 404 for malformed IDs
+      return res.status(404).json({ message: "Property not found (Invalid ID format)" });
+    }
+    // Handle all other server errors
     res.status(500).json({ message: "Server error" });
   }
 });
