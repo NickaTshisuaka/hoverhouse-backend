@@ -12,6 +12,7 @@ app.use(express.json());
 // --------- CORS CONFIGURATION (Updated Safe Version) ----------
 const allowedOrigins = [
   "http://localhost:5173", // local dev
+  "https://hoverhouse-frontend-two.vercel.app",
   "https://hoverhouse-frontend-three.vercel.app" // your deployed frontend (no slash at end)
 ];
 
