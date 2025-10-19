@@ -3,67 +3,51 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-// --------- CORS CONFIGURATION (Updated Safe Version) ----------
+// --------- CORS CONFIGURATION ----------
 const allowedOrigins = [
-  "http://localhost:5173", // local dev
+  "http://localhost:5173",
   "https://hoverhouse-frontend-two.vercel.app",
   "https://hoverhouse-frontend-three.vercel.app",
-  "https://hoverhouse-frontend-palu.vercel.app"
+  "https://hoverhouse-frontend-palu.vercel.app", // no trailing slash
+  "https://hoverhouse-frontend-palu.vercel.app/" // include trailing slash just in case
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  // Check if the origin is allowed
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    console.log(`✅ Accepted CORS origin: ${origin}`);
-  } else if (origin) {
-    console.log(`❌ Blocked CORS origin: ${origin}`);
-  }
-
-  // Allow headers & methods
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  // Preflight requests
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
-// --------- Connect to MongoDB ---------
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        console.log("✅ Accepted CORS origin:", origin);
+        callback(null, true);
+      } else {
+        console.log("❌ Blocked CORS origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("DB error:", err));
+);
 
-// --------- User Schema & Model ---------
+// --------- CONNECT TO MONGODB ----------
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ DB connection error:", err));
+
+// --------- USER SCHEMA & MODEL ----------
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
 const User = mongoose.model("User", userSchema);
 
-// --------- Property Schema & Model ---------
+// --------- PROPERTY SCHEMA & MODEL ----------
 const propertySchema = new mongoose.Schema({
   title: { type: String, required: true },
   location: { type: String, required: true },
@@ -85,10 +69,9 @@ const propertySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// explicitly use the 'properties' collection in Atlas
 const Property = mongoose.model("Property", propertySchema, "properties");
 
-// --------- Middleware to verify token ---------
+// --------- AUTH MIDDLEWARE ----------
 function verifyToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -101,7 +84,7 @@ function verifyToken(req, res, next) {
   });
 }
 
-// --------- Auth Routes ---------
+// --------- AUTH ROUTES ----------
 app.post("/api/signup", async (req, res) => {
   const { email, password } = req.body;
 
@@ -142,7 +125,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// --------- Property Routes ---------
+// --------- PROPERTY ROUTES ----------
 
 // GET all properties (public)
 app.get("/api/properties", async (req, res) => {
@@ -164,12 +147,10 @@ app.get("/api/properties/:id", async (req, res) => {
     res.json(property);
   } catch (err) {
     console.error(err);
-    // Handle invalid Mongoose ID format
-    if (err.name === "CastError" && err.kind === "ObjectId") {
+    if (err.name === "CastError")
       return res
         .status(404)
         .json({ message: "Property not found (Invalid ID format)" });
-    }
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -179,9 +160,10 @@ app.post("/api/properties", verifyToken, async (req, res) => {
   try {
     const newProperty = new Property(req.body);
     await newProperty.save();
-    res
-      .status(201)
-      .json({ message: "Property created", property: newProperty });
+    res.status(201).json({
+      message: "Property created",
+      property: newProperty,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -216,8 +198,6 @@ app.delete("/api/properties/:id", verifyToken, async (req, res) => {
   }
 });
 
-// --------- Start Server ---------
+// --------- START SERVER ----------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
