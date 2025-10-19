@@ -13,7 +13,8 @@ app.use(express.json());
 const allowedOrigins = [
   "http://localhost:5173", // local dev
   "https://hoverhouse-frontend-two.vercel.app",
-  "https://hoverhouse-frontend-three.vercel.app" // your deployed frontend (no slash at end)
+  "https://hoverhouse-frontend-three.vercel.app",
+  "https://hoverhouse-frontend-palu.vercel.app/"
 ];
 
 app.use((req, res, next) => {
