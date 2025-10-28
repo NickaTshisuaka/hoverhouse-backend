@@ -14,7 +14,7 @@ const allowedOrigins = [
   "https://hoverhouse-frontend-two.vercel.app",
   "https://hoverhouse-frontend-three.vercel.app",
   "https://hoverhouse-frontend-palu.vercel.app",
-  "https://hoverhouse-frontend-palu.vercel.app/"
+  
 ];
 
 app.use(
