@@ -11,9 +11,11 @@ app.use(express.json());
 // --------- CORS CONFIGURATION ----------
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://hoverhouse-frontend.vercel.app",
   "https://hoverhouse-frontend-two.vercel.app",
   "https://hoverhouse-frontend-three.vercel.app",
   "https://hoverhouse-frontend-palu.vercel.app",
+  "https://hoverhouse-frontend-git-fa44d4-nicka20060108-gmailcoms-projects.vercel.app"
   
 ];
 
