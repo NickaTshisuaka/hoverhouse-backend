@@ -9,26 +9,26 @@ const app = express();
 app.use(express.json());
 
 // --------- CORS CONFIGURATION ----------
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://hoverhouse-frontend.vercel.app",
-  "https://hoverhouse-frontend-two.vercel.app",
-  "https://hoverhouse-frontend-three.vercel.app",
-  "https://hoverhouse-frontend-palu.vercel.app",
-  "https://hoverhouse-frontend-git-fa44d4-nicka20060108-gmailcoms-projects.vercel.app"
-  
-];
-
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        console.log(" Accepted CORS origin:", origin);
-        callback(null, true);
-      } else {
-        console.log(" Blocked CORS origin:", origin);
-        callback(new Error("Not allowed by CORS"));
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      
+      // Allow localhost for development
+      if (origin.includes("localhost")) {
+        console.log("✅ Accepted localhost origin:", origin);
+        return callback(null, true);
       }
+      
+      // Allow all Vercel deployments for your project
+      if (origin.includes("hoverhouse-frontend") && origin.includes("vercel.app")) {
+        console.log("✅ Accepted Vercel origin:", origin);
+        return callback(null, true);
+      }
+      
+      console.log("❌ Blocked CORS origin:", origin);
+      callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
@@ -37,8 +37,8 @@ app.use(
 // --------- CONNECT TO MONGODB ----------
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log(" MongoDB connected"))
-  .catch((err) => console.error("DB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ DB connection error:", err));
 
 // --------- ROUTES ----------
 const userRoutes = require("./routes/users");
@@ -49,4 +49,4 @@ app.use("/api/properties", propertyRoutes);
 
 // --------- START SERVER ----------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
